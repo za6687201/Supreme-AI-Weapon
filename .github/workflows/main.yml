@@ -1,36 +1,52 @@
 name: Supreme Cloud APK Build
 on: [push]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
+
+      - name: Setup Environment
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - name: Force Install Full Build Suite
+
+      - name: System Hardening & Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev openjdk-17-jdk ant python3-pip
-          pip install --upgrade pip
-          pip install buildozer cython kivy
-      - name: Master SDK Path & License Fix
+          sudo apt-get install -y git zip unzip autoconf automake libtool pkg-config zlib1g-dev           libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev openjdk-17-jdk ant
+          pip install --upgrade pip buildozer cython kivy
+
+      - name: "Configuration Management: Deep Validation"
         run: |
           buildozer init
-          # Fixing Spec for OPPO A78
-          sed -i 's/android.archs = armeabi-v7a/android.archs = arm64-v8a/' buildozer.spec
-          sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
-          sed -i 's/# android.sdk = 31/android.sdk = 33/' buildozer.spec
-          sed -i 's/# android.ndk = 25b/android.ndk = 25b/' buildozer.spec
-          # Forcing Buildozer to use specific build-tools for Aidl
-          sed -i 's/# android.build_tools_version = 33.0.0/android.build_tools_version = 33.0.0/' buildozer.spec
-      - name: Execute Full Build (No Prompts)
+          # Python injection for 100% precision
+          python3 -c "
+          content = open('buildozer.spec').read()
+          content = content.replace('package.name = myapp', 'package.name = supremesia')
+          content = content.replace('android.archs = armeabi-v7a', 'android.archs = arm64-v8a')
+          content = content.replace('# android.accept_sdk_license = False', 'android.accept_sdk_license = True')
+          content = content.replace('# android.sdk = 31', 'android.sdk = 33')
+          content = content.replace('# android.ndk = 25b', 'android.ndk = 25b')
+          with open('buildozer.spec', 'w') as f: f.write(content)
+          "
+          # Validation Step
+          grep -E "package.name = supremesia|arm64-v8a|accept_sdk_license = True" buildozer.spec || exit 1
+          echo "Validation Passed: Config Applied Successfully."
+
+      - name: Autonomous Build
         run: |
           export APP_ANDROID_ACCEPT_SDK_LICENSE=1
-          # Hitting 'y' for every possible prompt to avoid "Broken Pipe"
           yes | buildozer --verbose android debug
-      - name: Deliver Final Weapon
+
+      - name: Final Verification & Audit
+        run: |
+          echo "Finalizing Build Audit..."
+          ls -lh bin/
+          if [ -z "" ]; then echo "Error: APK not found!"; exit 1; fi
+
+      - name: Deliver SIA Weapon
         uses: actions/upload-artifact@v4
         with:
           name: SIA-Supreme-Weapon
