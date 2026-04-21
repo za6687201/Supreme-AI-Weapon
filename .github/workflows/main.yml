@@ -9,31 +9,28 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - name: Force Install All Dependencies
+      - name: Force Install Full Build Suite
         run: |
           sudo apt-get update
           sudo apt-get install -y git zip unzip autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev openjdk-17-jdk ant python3-pip
-          # Installing latest build tools
           pip install --upgrade pip
           pip install buildozer cython kivy
-      - name: Master Spec & NDK Fix
+      - name: Master SDK Path & License Fix
         run: |
           buildozer init
-          # Architecture for OPPO A78
+          # Fixing Spec for OPPO A78
           sed -i 's/android.archs = armeabi-v7a/android.archs = arm64-v8a/' buildozer.spec
-          # Auto License Accept
           sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
-          # Force SDK and NDK stability
           sed -i 's/# android.sdk = 31/android.sdk = 33/' buildozer.spec
           sed -i 's/# android.ndk = 25b/android.ndk = 25b/' buildozer.spec
-          # Remove buildozer local constraints
-          sed -i 's/# android.allow_backup = True/android.allow_backup = False/' buildozer.spec
-      - name: Execute Autonomous Build
+          # Forcing Buildozer to use specific build-tools for Aidl
+          sed -i 's/# android.build_tools_version = 33.0.0/android.build_tools_version = 33.0.0/' buildozer.spec
+      - name: Execute Full Build (No Prompts)
         run: |
-          # Bypassing any interactive prompts
           export APP_ANDROID_ACCEPT_SDK_LICENSE=1
+          # Hitting 'y' for every possible prompt to avoid "Broken Pipe"
           yes | buildozer --verbose android debug
-      - name: Deliver Weapon (APK)
+      - name: Deliver Final Weapon
         uses: actions/upload-artifact@v4
         with:
           name: SIA-Supreme-Weapon
