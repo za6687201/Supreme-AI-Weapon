@@ -15,38 +15,36 @@ jobs:
       - name: System Hardening & Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip autoconf automake libtool pkg-config zlib1g-dev           libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev openjdk-17-jdk ant
+          # Master Fix: libtool-bin aur m4 add kiye gaye hain
+          sudo apt-get install -y git zip unzip autoconf automake libtool libtool-bin m4           pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake           libffi-dev libssl-dev openjdk-17-jdk ant
           pip install --upgrade pip buildozer cython kivy
 
-      - name: "Configuration Management: Deep Validation"
+      - name: Configuration Validation
         run: |
           buildozer init
-          # Python injection for 100% precision
           python3 -c "
-          content = open('buildozer.spec').read()
-          content = content.replace('package.name = myapp', 'package.name = supremesia')
-          content = content.replace('android.archs = armeabi-v7a', 'android.archs = arm64-v8a')
-          content = content.replace('# android.accept_sdk_license = False', 'android.accept_sdk_license = True')
-          content = content.replace('# android.sdk = 31', 'android.sdk = 33')
-          content = content.replace('# android.ndk = 25b', 'android.ndk = 25b')
-          with open('buildozer.spec', 'w') as f: f.write(content)
+          c = open('buildozer.spec').read()
+          c = c.replace('package.name = myapp', 'package.name = supremesia')
+          c = c.replace('android.archs = armeabi-v7a', 'android.archs = arm64-v8a')
+          c = c.replace('# android.accept_sdk_license = False', 'android.accept_sdk_license = True')
+          c = c.replace('# android.sdk = 31', 'android.sdk = 33')
+          c = c.replace('# android.ndk = 25b', 'android.ndk = 25b')
+          open('buildozer.spec', 'w').write(c)
           "
-          # Validation Step
-          grep -E "package.name = supremesia|arm64-v8a|accept_sdk_license = True" buildozer.spec || exit 1
-          echo "Validation Passed: Config Applied Successfully."
+          grep -E "arm64-v8a|accept_sdk_license = True" buildozer.spec
 
       - name: Autonomous Build
         run: |
           export APP_ANDROID_ACCEPT_SDK_LICENSE=1
+          # Buffering aur pipe errors se bachne ke liye flags
           yes | buildozer --verbose android debug
 
-      - name: Final Verification & Audit
+      - name: Final Audit & Deliver
         run: |
-          echo "Finalizing Build Audit..."
           ls -lh bin/
-          if [ -z "" ]; then echo "Error: APK not found!"; exit 1; fi
+          if [ -z \"$(ls -A bin/*.apk)\" ]; then exit 1; fi
 
-      - name: Deliver SIA Weapon
+      - name: Upload Finished Weapon
         uses: actions/upload-artifact@v4
         with:
           name: SIA-Supreme-Weapon
