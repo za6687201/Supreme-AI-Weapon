@@ -1,8 +1,8 @@
 name: Supreme Cloud APK Build
 on: [push]
 
-# Global Environment for Node.js 24 Compatibility
 env:
+  # Node 24 Force Enable to bypass deprecation
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -10,20 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4 # Latest version compatible with Node 24
+        uses: actions/checkout@v4
 
-      - name: Setup Environment
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
+          cache: 'pip'
 
-      - name: System Hardening & Dependencies
+      - name: Install Industrial Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y git zip unzip autoconf automake libtool libtool-bin m4           pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake           libffi-dev libssl-dev openjdk-17-jdk ant
-          pip install --upgrade pip buildozer cython kivy
+          pip install --upgrade pip buildozer cython kivy kivymd
 
-      - name: Industrial Configuration & Validation
+      - name: Config Management & Validation
         run: |
           buildozer init
           python3 -c "
@@ -35,17 +36,18 @@ jobs:
           c = c.replace('# android.ndk = 25b', 'android.ndk = 25b')
           open('buildozer.spec', 'w').write(c)
           "
-          grep -E "arm64-v8a|accept_sdk_license = True" buildozer.spec
+          # Validation
+          grep "arm64-v8a" buildozer.spec && echo "Config Validated"
 
       - name: Autonomous Build
         run: |
           export APP_ANDROID_ACCEPT_SDK_LICENSE=1
           yes | buildozer --verbose android debug
 
-      - name: Final Audit & Deliver
+      - name: Audit & Deliver
         run: |
           ls -lh bin/
-          if [ -z \"$(ls -A bin/*.apk)\" ]; then echo 'Build Failed: No APK found'; exit 1; fi
+          if [ -z \"$(ls -A bin/*.apk)\" ]; then echo 'APK Generation Failed'; exit 1; fi
 
       - name: Deliver SIA Weapon
         uses: actions/upload-artifact@v4
