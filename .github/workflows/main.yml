@@ -9,12 +9,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - name: Install System Tools
+      - name: Force Install All Build Tools
         run: |
           sudo apt update
-          sudo apt install -y git zip unzip autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev openjdk-17-jdk ant
+          # Har missing library aur tool jo logs mein error de rahi thi
+          sudo apt install -y git zip unzip autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev openjdk-17-jdk ant python3-dev build-essential
           pip install buildozer cython kivy
-      - name: Deep Fix Buildozer Spec
+      - name: Clean and Configure Buildozer
         run: |
           buildozer init
           # Master Config for OPPO A78
@@ -23,13 +24,13 @@ jobs:
           sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
           sed -i 's/# android.sdk = 31/android.sdk = 33/' buildozer.spec
           sed -i 's/# android.ndk = 25b/android.ndk = 25b/' buildozer.spec
-          # Forcing non-interactive mode via environment
-          echo "APP_ANDROID_ACCEPT_SDK_LICENSE=1" >> $GITHUB_ENV
-      - name: Build APK (Non-Interactive Mode)
+      - name: Build APK (Bypass Config Errors)
         run: |
-          # 'yes' command hatakar flag base building
+          # Environment variables to fix Libffi and Autoconf issues
+          export CFLAGS="-DIF_LIBFFI_H"
+          export APP_ANDROID_ACCEPT_SDK_LICENSE=1
           buildozer --verbose android debug
-      - name: Upload Final APK
+      - name: Upload God-Level APK
         uses: actions/upload-artifact@v4
         with:
           name: SIA-Supreme-Weapon
