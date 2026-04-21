@@ -9,22 +9,27 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - name: Install Dependencies
+      - name: Install System Dependencies
         run: |
-          pip install buildozer cython kivy
           sudo apt update
-          sudo apt install -y git zip unzip autoconf autotools-dev libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev openjdk-17-jdk
-      - name: Build APK (Bypass All Checks)
+          # Autoconf aur missing build tools ka mukammal set
+          sudo apt install -y git zip unzip autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev openjdk-17-jdk ant
+          pip install buildozer cython kivy
+      - name: Configure Buildozer Spec
         run: |
           buildozer init
-          # Master Configuration for OPPO A78
+          # OPPO A78 Optimization
           sed -i 's/package.name = myapp/package.name = supremesia/' buildozer.spec
           sed -i 's/android.archs = armeabi-v7a/android.archs = arm64-v8a/' buildozer.spec
-          # License & Aidl Power Fix
           sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
           sed -i 's/# android.sdk = 31/android.sdk = 33/' buildozer.spec
-          # Forcing Buildozer to auto-accept licenses in terminal
-          yes | buildozer android debug
+          sed -i 's/# android.ndk = 25b/android.ndk = 25b/' buildozer.spec
+      - name: Build APK (Force Non-Interactive)
+        run: |
+          # 'yes' command ka 'Broken pipe' fix karne ke liye hum flag use karenge
+          buildozer --verbose android debug
+        env:
+          APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
       - name: Upload Final APK
         uses: actions/upload-artifact@v4
         with:
