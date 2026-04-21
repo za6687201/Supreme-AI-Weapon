@@ -1,11 +1,16 @@
 name: Supreme Cloud APK Build
 on: [push]
 
+# Global Environment for Node.js 24 Compatibility
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4 # Latest version compatible with Node 24
 
       - name: Setup Environment
         uses: actions/setup-python@v5
@@ -15,11 +20,10 @@ jobs:
       - name: System Hardening & Dependencies
         run: |
           sudo apt-get update
-          # Master Fix: libtool-bin aur m4 add kiye gaye hain
           sudo apt-get install -y git zip unzip autoconf automake libtool libtool-bin m4           pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake           libffi-dev libssl-dev openjdk-17-jdk ant
           pip install --upgrade pip buildozer cython kivy
 
-      - name: Configuration Validation
+      - name: Industrial Configuration & Validation
         run: |
           buildozer init
           python3 -c "
@@ -36,15 +40,14 @@ jobs:
       - name: Autonomous Build
         run: |
           export APP_ANDROID_ACCEPT_SDK_LICENSE=1
-          # Buffering aur pipe errors se bachne ke liye flags
           yes | buildozer --verbose android debug
 
       - name: Final Audit & Deliver
         run: |
           ls -lh bin/
-          if [ -z \"$(ls -A bin/*.apk)\" ]; then exit 1; fi
+          if [ -z \"$(ls -A bin/*.apk)\" ]; then echo 'Build Failed: No APK found'; exit 1; fi
 
-      - name: Upload Finished Weapon
+      - name: Deliver SIA Weapon
         uses: actions/upload-artifact@v4
         with:
           name: SIA-Supreme-Weapon
