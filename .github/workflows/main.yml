@@ -4,9 +4,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
       - name: Install Cloud Build Tools
@@ -17,13 +17,12 @@ jobs:
       - name: Build APK for OPPO A78
         run: |
           buildozer init
-          # Auto-Configuration for Sohail Master
           sed -i 's/package.name = myapp/package.name = supremesia/' buildozer.spec
           sed -i 's/package.domain = org.test/package.domain = org.sohailmaster/' buildozer.spec
           sed -i 's/android.archs = armeabi-v7a/android.archs = arm64-v8a/' buildozer.spec
           buildozer android debug
       - name: Upload Finished APK
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: SIA-Supreme-Weapon
           path: bin/*.apk
