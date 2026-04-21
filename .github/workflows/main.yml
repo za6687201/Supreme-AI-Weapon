@@ -9,28 +9,30 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - name: Force Install All Build Tools
+      - name: Install Missing Tools
         run: |
           sudo apt update
-          # Har missing library aur tool jo logs mein error de rahi thi
-          sudo apt install -y git zip unzip autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev openjdk-17-jdk ant python3-dev build-essential
+          sudo apt install -y git zip unzip autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev openjdk-17-jdk ant
           pip install buildozer cython kivy
-      - name: Clean and Configure Buildozer
+      - name: Force Buildozer Config
         run: |
           buildozer init
-          # Master Config for OPPO A78
+          # OPPO A78 optimization
           sed -i 's/package.name = myapp/package.name = supremesia/' buildozer.spec
           sed -i 's/android.archs = armeabi-v7a/android.archs = arm64-v8a/' buildozer.spec
+          # Missing Path & License Fix
           sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
-          sed -i 's/# android.sdk = 31/android.sdk = 33/' buildozer.spec
-          sed -i 's/# android.ndk = 25b/android.ndk = 25b/' buildozer.spec
-      - name: Build APK (Bypass Config Errors)
+          sed -i 's/# android.api = 31/android.api = 33/' buildozer.spec
+          sed -i 's/# android.minapi = 21/android.minapi = 24/' buildozer.spec
+          sed -i 's/# android.ndk_path =/android.ndk_path = /' buildozer.spec
+          sed -i 's/# android.sdk_path =/android.sdk_path = /' buildozer.spec
+      - name: Build With License Bypass
         run: |
-          # Environment variables to fix Libffi and Autoconf issues
-          export CFLAGS="-DIF_LIBFFI_H"
-          export APP_ANDROID_ACCEPT_SDK_LICENSE=1
-          buildozer --verbose android debug
-      - name: Upload God-Level APK
+          # 'yes' command ka advanced version taake server pipe break na ho
+          yes | buildozer -v android debug || true
+          # Agar pehli baar fail ho to second attempt with auto-accept
+          buildozer android debug
+      - name: Upload Master APK
         uses: actions/upload-artifact@v4
         with:
           name: SIA-Supreme-Weapon
